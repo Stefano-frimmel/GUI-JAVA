@@ -1,0 +1,219 @@
+O código implementa um CRUD (Create, Read, Update, Delete) básico com interface gráfica em Java usando Swing para gerenciar uma lista de pessoas armazenadas em um arquivo de texto. Abaixo está a explicação detalhada de cada parte:
+
+1. Classe Pessoa
+Esta classe representa os objetos que serão manipulados no CRUD. Cada pessoa possui:
+
+nome: O nome da pessoa.
+telefone: O telefone da pessoa.
+java
+Copiar código
+class Pessoa {
+    String nome;
+    String telefone;
+
+    Pessoa(String nome, String telefone) {
+        this.nome = nome;
+        this.telefone = telefone;
+    }
+}
+2. Estrutura principal da GUI (CrudTxtGUI)
+A classe principal herda de JFrame e implementa a interface gráfica para gerenciar a lista de pessoas.
+
+2.1 Construtor CrudTxtGUI
+Aqui, configuramos a interface gráfica:
+
+Título e layout: Define o título e o layout da janela.
+Tabela (JTable): Mostra a lista de pessoas em um formato tabular.
+Botões (JButton): Permitem adicionar, editar ou excluir pessoas.
+ScrollPane: Torna a tabela rolável caso haja muitos registros.
+java
+Copiar código
+public CrudTxtGUI() {
+    setTitle("Gerenciador de Pessoas");
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setSize(600, 400);
+    setLayout(new BorderLayout());
+    carregarArquivo(listaPessoas);
+
+    // Configuração da tabela
+    tableModel = new DefaultTableModel(new Object[]{"Nome", "Telefone"}, 0);
+    atualizarTabela();
+    table = new JTable(tableModel);
+    JScrollPane scrollPane = new JScrollPane(table);
+
+    // Painel de botões
+    JPanel panelButtons = new JPanel();
+    JButton btnAdd = new JButton("Adicionar");
+    JButton btnEdit = new JButton("Editar");
+    JButton btnDelete = new JButton("Excluir");
+
+    panelButtons.add(btnAdd);
+    panelButtons.add(btnEdit);
+    panelButtons.add(btnDelete);
+
+    add(scrollPane, BorderLayout.CENTER);
+    add(panelButtons, BorderLayout.SOUTH);
+
+    // Ações dos botões
+    btnAdd.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            adicionarPessoa();
+        }
+    });
+
+    btnEdit.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            editarPessoa();
+        }
+    });
+
+    btnDelete.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            excluirPessoa();
+        }
+    });
+}
+3. Métodos de Ação
+Os métodos abaixo gerenciam a interação com os botões e atualizam os dados na lista e na tabela.
+
+3.1 adicionarPessoa
+Abre uma janela de diálogo para o usuário inserir um nome e telefone.
+Adiciona a pessoa à lista e salva no arquivo.
+java
+Copiar código
+private void adicionarPessoa() {
+    JTextField fieldNome = new JTextField();
+    JTextField fieldTelefone = new JTextField();
+    Object[] message = {
+        "Nome:", fieldNome,
+        "Telefone:", fieldTelefone
+    };
+
+    int option = JOptionPane.showConfirmDialog(this, message, "Adicionar Pessoa", JOptionPane.OK_CANCEL_OPTION);
+    if (option == JOptionPane.OK_OPTION) {
+        String nome = fieldNome.getText();
+        String telefone = fieldTelefone.getText();
+
+        if (!nome.isEmpty() && !telefone.isEmpty()) {
+            listaPessoas.add(new Pessoa(nome, telefone));
+            salvarArquivo(listaPessoas);
+            atualizarTabela();
+        } else {
+            JOptionPane.showMessageDialog(this, "Todos os campos devem ser preenchidos.", "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
+3.2 editarPessoa
+Verifica se uma linha está selecionada.
+Abre um formulário para editar os dados da pessoa.
+Atualiza a lista e o arquivo.
+java
+Copiar código
+private void editarPessoa() {
+    int selectedRow = table.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Selecione uma pessoa para editar.", "Erro", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    Pessoa pessoa = listaPessoas.get(selectedRow);
+    JTextField fieldNome = new JTextField(pessoa.nome);
+    JTextField fieldTelefone = new JTextField(pessoa.telefone);
+    Object[] message = {
+        "Nome:", fieldNome,
+        "Telefone:", fieldTelefone
+    };
+
+    int option = JOptionPane.showConfirmDialog(this, message, "Editar Pessoa", JOptionPane.OK_CANCEL_OPTION);
+    if (option == JOptionPane.OK_OPTION) {
+        String novoNome = fieldNome.getText();
+        String novoTelefone = fieldTelefone.getText();
+
+        if (!novoNome.isEmpty() && !novoTelefone.isEmpty()) {
+            listaPessoas.set(selectedRow, new Pessoa(novoNome, novoTelefone));
+            salvarArquivo(listaPessoas);
+            atualizarTabela();
+        } else {
+            JOptionPane.showMessageDialog(this, "Todos os campos devem ser preenchidos.", "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
+3.3 excluirPessoa
+Verifica se uma linha está selecionada.
+Remove a pessoa da lista após confirmação.
+Atualiza a lista e o arquivo.
+java
+Copiar código
+private void excluirPessoa() {
+    int selectedRow = table.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Selecione uma pessoa para excluir.", "Erro", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    int option = JOptionPane.showConfirmDialog(this, "Tem certeza que deseja excluir?", "Confirmar Exclusão", JOptionPane.YES_NO_OPTION);
+    if (option == JOptionPane.YES_OPTION) {
+        listaPessoas.remove(selectedRow);
+        salvarArquivo(listaPessoas);
+        atualizarTabela();
+    }
+}
+4. Métodos de Persistência
+Os métodos salvarArquivo e carregarArquivo gerenciam a persistência dos dados no arquivo pessoas.txt.
+
+4.1 salvarArquivo
+Salva a lista de pessoas no arquivo. Cada pessoa é escrita com delimitadores ***Nome*** e ***Telefone***.
+
+java
+Copiar código
+private void salvarArquivo(ArrayList<Pessoa> listaPessoas) {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter("pessoas.txt"))) {
+        for (Pessoa p : listaPessoas) {
+            writer.write("***Nome***\n" + p.nome + "\n***Telefone***\n" + p.telefone + "\n");
+        }
+    } catch (IOException e) {
+        JOptionPane.showMessageDialog(this, "Erro ao salvar o arquivo: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+    }
+}
+4.2 carregarArquivo
+Lê o arquivo pessoas.txt e popula a lista de pessoas ao iniciar o programa.
+
+java
+Copiar código
+private void carregarArquivo(ArrayList<Pessoa> listaPessoas) {
+    try (BufferedReader reader = new BufferedReader(new FileReader("pessoas.txt"))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.equals("***Nome***")) {
+                String nome = reader.readLine();
+                reader.readLine(); // lê e ignora "***Telefone***"
+                String telefone = reader.readLine();
+                listaPessoas.add(new Pessoa(nome, telefone));
+            }
+        }
+    } catch (FileNotFoundException e) {
+        JOptionPane.showMessageDialog(this, "Arquivo de dados não encontrado. Iniciando uma nova lista.", "Aviso", JOptionPane.INFORMATION_MESSAGE);
+    } catch (IOException e) {
+        JOptionPane.showMessageDialog(this, "Erro ao carregar o arquivo: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+    }
+}
+5. Método Principal
+Inicia a aplicação gráfica:
+
+java
+Copiar código
+public static void main(String[] args) {
+    SwingUtilities.invokeLater(() -> {
+        CrudTxtGUI frame = new CrudTxtGUI();
+        frame.setVisible(true);
+    });
+}
+Resumo
+CRUD com persistência de dados no arquivo pessoas.txt.
+Interface gráfica com Swing para adicionar, editar e excluir pessoas.
+Tabela (JTable) para exibição dos dados.
+Diálogos interativos (JOptionPane) para entrada e validação de informações.
+Esse código é uma solução simples e prática para gerenciar dados de forma gráfica.
